@@ -78,7 +78,8 @@ export class CancellaAccountComponent {
           const dialogRef = this.dialog.open(DialogConfermaComponent, {
             minWidth: '500px',
             data: {
-              messaggio: 'Sei sicuro di voler eliminare il tuo account?',
+              titolo: 'Cancellazione account',
+              messaggio: 'Sei sicuro di voler cancellare questo account?',
             },
           });
 

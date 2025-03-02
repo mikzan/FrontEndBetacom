@@ -8,6 +8,7 @@ import { Observable, of } from 'rxjs';
 import { ClienteService } from '../../../servizi/cliente/cliente.service';
 import { DialogConfermaComponent } from '../../../dialog/dialog-conferma/dialog-conferma/dialog-conferma.component';
 import { MatDialog } from '@angular/material/dialog';
+import { PopUpComponent } from '../../../dialog/pop-up/pop-up.component';
 
 @Component({
   selector: 'app-cambia-password',
@@ -80,9 +81,12 @@ export class CambiaPasswordComponent {
       .subscribe(
         (response) => {
           this.resetPasswordAfterSubmit();
-          const dialogRef = this.dialog.open(DialogConfermaComponent, {
+          const dialogRef = this.dialog.open(PopUpComponent, {
             minWidth: '500px',
-            data: { messaggio: response.msg },
+            data: {
+              titolo: 'Modifica della password',
+              msg: response.msg,
+            },
           });
           dialogRef.afterClosed().subscribe(() => {
             this.router.navigate(['/profilo']);
