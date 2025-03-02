@@ -52,6 +52,10 @@
       <mat-error *ngIf="clienteForm.get('telefono')?.hasError('required')">
         Il telefono è obbligatorio.
       </mat-error>
+      <mat-error *ngIf="clienteForm.get('telefono')?.hasError('pattern')">
+        Il numero di telefono non è valido. Assicurati che rispetti il formato
+        internazionale.
+      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="w-100">

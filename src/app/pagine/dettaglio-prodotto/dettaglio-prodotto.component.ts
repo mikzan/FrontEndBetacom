@@ -39,7 +39,8 @@ export class DettaglioProdottoComponent implements OnInit {
     private loader: LoaderService,
     private wishlistService: WishlistService,
     private dialog: MatDialog,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.idProdotto = +this.route.snapshot.paramMap.get('idProdotto')!;
   }
@@ -99,6 +100,9 @@ export class DettaglioProdottoComponent implements OnInit {
   }
 
   aggiungiProdotto() {
+    this.settaRottaLoginPerGuest();
+    this.noAzioniPerAdminNonCliente();
+
     if (this.qntForm.value.qnt > 0) {
       let request = {
         idCliente: this.idCliente,
@@ -129,6 +133,8 @@ export class DettaglioProdottoComponent implements OnInit {
 
   //WISHLIST
   addToWishlist(prodotto: Prodotto) {
+    this.settaRottaLoginPerGuest();
+    this.noAzioniPerAdminNonCliente();
     this.wishlistService
       .addProductToWishlist(this.idCliente, [prodotto.idProdotto])
       .subscribe({
@@ -143,6 +149,8 @@ export class DettaglioProdottoComponent implements OnInit {
   }
 
   removeFromWishlist(prodotto: Prodotto) {
+    this.settaRottaLoginPerGuest();
+    this.noAzioniPerAdminNonCliente();
     console.log('Tentativo di rimozione dalla wishlist:', prodotto.idProdotto);
 
     this.wishlistService
@@ -183,5 +191,21 @@ export class DettaglioProdottoComponent implements OnInit {
         console.error('Errore nel recupero della wishlist:', error);
       },
     });
+  }
+
+  noAzioniPerAdminNonCliente(): void {
+    if (this.authService.isAdminNotCliente()) {
+      this.openDialog({
+        titolo: 'Errore',
+        msg: 'Devi essere un cliente per effettuare questa operazione.',
+      });
+      return;
+    }
+  }
+
+  settaRottaLoginPerGuest(): void {
+    if (this.authService.getToken() === null) {
+      this.router.navigate(['/signin']);
+    }
   }
 }

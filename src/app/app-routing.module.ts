@@ -28,6 +28,7 @@ import { RegistraUtenteAdminComponent } from './admin/registra-utente-admin/regi
 import { AssociaClienteComponent } from './admin/associa-cliente/associa-cliente.component';
 import { CancellaAccountComponent } from './pagine/cancella-account/cancella-account/cancella-account.component';
 import { Pagina500Component } from './pagine/pagina500/pagina500.component';
+import { PaginaCarrelloVuotoComponent } from './pagine/pagina-carrello-vuoto/pagina-carrello-vuoto.component';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', component: HomeComponent },
@@ -42,6 +43,7 @@ const routes: Routes = [
       { path: 'checkout', component: CheckoutComponent },
     ],
   },
+  { path: 'carrello-guest', component: PaginaCarrelloVuotoComponent },
   { path: 'prodotti', component: ProdottiComponent },
   {
     path: 'admin/dashboard',

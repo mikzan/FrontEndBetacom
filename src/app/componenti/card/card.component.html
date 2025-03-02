@@ -32,13 +32,13 @@
         <i
           class="bi bi-suit-heart"
           [ngClass]="{ 'text-danger': isInWishlist }"
-          *ngIf="!isInWishlist && !isWishlistPage"
+          *ngIf="!isInWishlist && !isWishlistPage && isLoggedOut"
           (click)="preferitiWishlist()"
         ></i>
 
         <i
           class="bi bi-suit-heart-fill text-danger"
-          *ngIf="isInWishlist && !isWishlistPage"
+          *ngIf="isInWishlist && !isWishlistPage && isLoggedOut"
           (click)="preferitiWishlist()"
         ></i>
       </div>

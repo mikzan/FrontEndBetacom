@@ -4,25 +4,20 @@ import { Observable, Subject, Subscription, tap } from 'rxjs';
 import { SignIn } from '../interfacce/SignIn';
 import { Router } from '@angular/router';
 import { ConfigService } from '../servizi/config/config.service';
-import { LocalStorageService } from '../servizi/localstorage/localstorage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private signInUrl: string = 'http://localhost:9090/rest/utente/signin';
-  private authSignInUrl: string = 'http://localhost:9090/rest/auth/login';
-  private logoutSubject: Subject<void> = new Subject<void>();
-  private subscriptions: Subscription[] = [];
+  private authSignInUrl: string = 'http://localhost:9090/rest/auth/signin';
+
   isRcLog: boolean = false;
-  isRcReg: boolean = false;
   errorMessage: string = '';
 
   constructor(
     private http: HttpClient,
     private router: Router,
-    private config: ConfigService,
-    private localStorage: LocalStorageService
+    private config: ConfigService
   ) {}
 
   // Versione per JWT token
@@ -32,6 +27,7 @@ export class AuthService {
         if (response.rc) {
           this.setSessione(response.dati);
           this.isRcLog = true;
+
           this.router.navigate([this.getRedirectionRoute()]).then(() => {
             window.location.reload();
           });
@@ -96,11 +92,8 @@ export class AuthService {
 
   // LOGOUT - Rimuove il token e reindirizza al login
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('dati_utente');
-    localStorage.removeItem('ruoloUtente');
-    console.log('🚪 Logout effettuato!');
-    this.router.navigate(['/login']).then(() => {
+    localStorage.clear();
+    this.router.navigate(['/signin']).then(() => {
       window.location.reload();
     });
   }

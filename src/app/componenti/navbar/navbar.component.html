@@ -41,12 +41,16 @@
           <a class="nav-link" routerLink="/prodotti">Prodotti</a>
         </li>
         <li class="nav-item px-3 px-lg-0 py-1 py-lg-4" (click)="closeNavbar()">
-          <a class="nav-link" routerLink="/carrello" [matBadge]="totalItem"
+          <a
+            *ngIf="!isAdminNotCliente()"
+            class="nav-link"
+            routerLink="/carrello"
+            [matBadge]="totalItem"
             >Carrello</a
           >
         </li>
         <li
-          *ngIf="isRoleValidAndIdClienteValidi()"
+          *ngIf="!isAdminNotCliente() && isAuthenticated()"
           class="nav-item dropdown px-3 px-lg-0 py-1 py-lg-4"
         >
           <a

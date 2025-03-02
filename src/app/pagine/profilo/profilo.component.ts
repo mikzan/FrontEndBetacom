@@ -46,13 +46,25 @@ export class ProfiloComponent implements OnInit {
   }
 
   inizializzaForm(): void {
+    const telefonoRegex =
+      '^\\+?\\d{1,3}[\\s-]?\\(?\\d{1,4}\\)?[\\s-]?\\d{1,4}[\\s-]?\\d{1,4}$';
+    const usernamePattern = '^[a-zA-Z0-9-_]{3,15}$'; // Solo lettere, numeri, trattini, underscores, 3-15 caratteri
+
     this.clienteForm = new FormGroup({
       nome: new FormControl('', [Validators.required]),
       cognome: new FormControl('', [Validators.required]),
       immagineCliente: new FormControl(''),
       email: new FormControl('', [Validators.required, Validators.email]),
-      telefono: new FormControl('', [Validators.required]),
-      username: new FormControl(''),
+      telefono: new FormControl('', [
+        Validators.required,
+        Validators.pattern(telefonoRegex),
+      ]),
+      username: new FormControl('', [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(15),
+        Validators.pattern(usernamePattern),
+      ]),
       via: new FormControl('', [Validators.required]),
       comune: new FormControl('', [Validators.required]),
       provincia: new FormControl('', [Validators.required]),

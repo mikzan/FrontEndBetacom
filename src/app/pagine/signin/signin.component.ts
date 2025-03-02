@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 
@@ -21,8 +26,15 @@ export class SigninComponent {
   ) {}
 
   ngOnInit(): void {
+    const usernamePattern = '^[a-zA-Z0-9-_]{3,15}$'; // Solo lettere, numeri, trattini, underscores, 3-15 caratteri
+
     this.signinForm = this.formBuilder.group({
-      username: ['', Validators.required],
+      username: new FormControl('', [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(15),
+        Validators.pattern(usernamePattern),
+      ]),
       password: ['', [Validators.required, Validators.minLength(8)]],
     });
   }

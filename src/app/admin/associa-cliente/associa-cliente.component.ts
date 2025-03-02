@@ -43,11 +43,16 @@ export class AssociaClienteComponent {
   }
 
   inizializzaForm(): void {
+    const telefonoRegex =
+      '^\\+?\\d{1,3}[\\s-]?\\(?\\d{1,4}\\)?[\\s-]?\\d{1,4}[\\s-]?\\d{1,4}$';
     this.clienteForm = new FormGroup({
       nome: new FormControl('', [Validators.required]),
       cognome: new FormControl('', [Validators.required]),
       immagineCliente: new FormControl(''),
-      telefono: new FormControl('', [Validators.required]),
+      telefono: new FormControl('', [
+        Validators.required,
+        Validators.pattern(telefonoRegex),
+      ]),
       via: new FormControl('', [Validators.required]),
       comune: new FormControl('', [Validators.required]),
       provincia: new FormControl('', [Validators.required]),

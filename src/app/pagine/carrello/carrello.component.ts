@@ -30,6 +30,11 @@ export class CarrelloComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.idCliente === null) {
+      this.isLoading = false;
+      this.router.navigate(['/carrello-guest']);
+      return;
+    }
     this.isLoading = true;
     this.serv.listaProdotti(this.idCliente).subscribe({
       next: (r: any) => {
@@ -43,11 +48,10 @@ export class CarrelloComponent implements OnInit {
         } else {
           this.rc = r.rc;
         }
-
         this.isLoading = false;
       },
       error: (err) => {
-        this, this.router.navigate(['/error500']);
+        this.router.navigate(['/error500']);
       },
     });
   }

@@ -35,6 +35,18 @@
         >
           Inserisci un username valido
         </h4>
+        <h4
+          class="error-msg-input"
+          *ngIf="signinForm.get('username')?.hasError('minlength')"
+        >
+          Lo username deve avere almeno 3 caratteri.
+        </h4>
+        <h4
+          class="error-msg-input"
+          *ngIf="signinForm.get('username')?.hasError('maxlength')"
+        >
+          Lo username può avere al massimo 15 caratteri.
+        </h4>
       </div>
     </div>
 

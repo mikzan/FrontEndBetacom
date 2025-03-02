@@ -29,12 +29,11 @@ export class ProdottiComponent implements OnInit {
   cartBadge: { [idProdotto: number]: number } = {};
   pagine: number = 0;
   paginaCorrente = 0;
-
   wishlistId: number[] = [];
 
   constructor(
     private service: ProdottiService,
-    private route: Router,
+    private router: Router,
     private serviceCarrello: CarrelloService,
     private loader: LoaderService,
     private wishlistService: WishlistService,
@@ -55,6 +54,13 @@ export class ProdottiComponent implements OnInit {
   }
 
   getProdottiCarrello() {
+    if (
+      !this.authService.isAuthenticated() ||
+      this.authService.isAdminNotCliente()
+    ) {
+      return;
+    }
+
     this.serviceCarrello.listaProdotti(this.idCliente).subscribe({
       next: (r: any) => {
         this.loader.startLoader();
@@ -70,7 +76,7 @@ export class ProdottiComponent implements OnInit {
         this.loader.stopLoader();
       },
       error: (err) => {
-        this, this.route.navigate(['/error500']);
+        this.router.navigate(['/error500']);
       },
     });
   }
@@ -104,7 +110,7 @@ export class ProdottiComponent implements OnInit {
   }
 
   dettagliProdotto(idProdotto: number) {
-    this.route.navigate(['/dettaglio-prodotto', idProdotto]);
+    this.router.navigate(['/dettaglio-prodotto', idProdotto]);
   }
 
   //Logica Filtri
@@ -178,6 +184,19 @@ export class ProdottiComponent implements OnInit {
 
   //Aggiungi prodotto al carrello
   aggiungiProdotto(idProdotto: number) {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/signin']);
+      return;
+    }
+
+    if (this.authService.isAdminNotCliente()) {
+      this.openDialog({
+        titolo: 'Errore',
+        msg: 'Devi essere un cliente per aggiungere prodotti al carrello.',
+      });
+      return;
+    }
+
     this.serviceCarrello
       .addProdotto({
         idProdotto: idProdotto,
@@ -203,6 +222,8 @@ export class ProdottiComponent implements OnInit {
   }
 
   addToWishlist(prodotto: Prodotto) {
+    this.noAzioniPerAdminNonCliente();
+
     this.wishlistService
       .addProductToWishlist(this.idCliente, [prodotto.idProdotto])
       .subscribe({
@@ -217,6 +238,7 @@ export class ProdottiComponent implements OnInit {
   }
 
   removeFromWishlist(prodotto: Prodotto) {
+    this.noAzioniPerAdminNonCliente();
     this.wishlistService
       .removeProductFromWishlist(this.idCliente, prodotto.idProdotto)
       .subscribe({
@@ -233,6 +255,10 @@ export class ProdottiComponent implements OnInit {
   }
 
   caricaWishlist() {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
     this.wishlistService.getWishlist(this.idCliente).subscribe({
       next: (data) => {
         this.wishlistId = data.dati.map((p: Prodotto) => p.idProdotto);
@@ -242,6 +268,7 @@ export class ProdottiComponent implements OnInit {
       },
     });
   }
+
   openDialog(inputDialog: any) {
     this.dialog.open(PopUpComponent, {
       width: '400px',
@@ -251,5 +278,15 @@ export class ProdottiComponent implements OnInit {
         reload: inputDialog.reload,
       },
     });
+  }
+
+  noAzioniPerAdminNonCliente(): void {
+    if (this.authService.isAdminNotCliente()) {
+      this.openDialog({
+        titolo: 'Errore',
+        msg: 'Devi essere un cliente per effettuare questa operazione.',
+      });
+      return;
+    }
   }
 }
