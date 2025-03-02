@@ -19,6 +19,7 @@ export class CancellaAccountComponent {
   passwordCorrenteVisibile: boolean = false;
   passwordDiConfermaVisibile: boolean = false;
   messaggioErrore: string | null = null;
+  idUtente: number = 0;
 
   constructor(
     private router: Router,
@@ -29,6 +30,7 @@ export class CancellaAccountComponent {
 
   ngOnInit(): void {
     this.inizializzaForm();
+    this.idUtente = this.authService.getUtenteIdSessione();
   }
 
   inizializzaForm(): void {
@@ -49,7 +51,7 @@ export class CancellaAccountComponent {
 
   createUtenteFormData(): any {
     return {
-      idUtente: this.authService.getUtenteIdSessione(),
+      idUtente: this.idUtente,
     };
   }
 
@@ -68,7 +70,7 @@ export class CancellaAccountComponent {
 
     const passwordCorrente = this.passwordForm.get('passwordCorrente')?.value;
     const utenteInvioForm = this.createUtenteFormData();
-    const idUtente = this.authService.getUtenteIdSessione();
+    const idUtente = this.idUtente;
     this.utenteService
       .verifyCurrentPassword(idUtente, passwordCorrente)
       .subscribe(

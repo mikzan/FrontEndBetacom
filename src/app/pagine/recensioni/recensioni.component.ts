@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FormRecensioneComponent } from '../../dialog/form-recensione/form-recensione.component';
 import { ProdottiService } from '../../servizi/prodotti/prodotti.service';
 import { PopUpComponent } from '../../dialog/pop-up/pop-up.component';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-recensioni',
@@ -18,10 +19,11 @@ export class RecensioniComponent implements OnInit {
     private serv: RecensioneService,
     private serviceProdotto: ProdottiService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private authService: AuthService
   ) {}
 
-  idCliente = +localStorage.getItem('idCliente')!;
+  idCliente: number = 0;
   msg: string = '';
   rc: boolean = true;
   isLoading: boolean;
@@ -29,12 +31,16 @@ export class RecensioniComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
+    this.idCliente = this.authService.getClienteIdSessione();
     this.serv.listaRecensioniUtente(this.idCliente).subscribe((r: any) => {
       if (r.rc) {
         this.recensioni = r.dati;
-      } 
+      }
       if (this.recensioni.length == 0) {
-        this.openDialog({titolo: "Attenzione", msg: "Non hai ancora fatto acquisti da noi"})
+        this.openDialog({
+          titolo: 'Attenzione',
+          msg: 'Non hai ancora fatto acquisti da noi',
+        });
       }
     });
     this.isLoading = false;
@@ -57,9 +63,9 @@ export class RecensioniComponent implements OnInit {
     };
     this.serv.eliminaRecensione(request).subscribe((r: any) => {
       if (r.rc) {
-        this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+        this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
       } else {
-        this.openDialog({titolo: "Errore", msg : r.msg })
+        this.openDialog({ titolo: 'Errore', msg: r.msg });
       }
     });
     this.isLoading = false;
@@ -87,9 +93,11 @@ export class RecensioniComponent implements OnInit {
   openDialog(inputDialog: any) {
     this.dialog.open(PopUpComponent, {
       width: '400px',
-      data: { titolo: inputDialog.titolo,
+      data: {
+        titolo: inputDialog.titolo,
         msg: inputDialog.msg,
-        reload: inputDialog.reload },
+        reload: inputDialog.reload,
+      },
     });
   }
 }

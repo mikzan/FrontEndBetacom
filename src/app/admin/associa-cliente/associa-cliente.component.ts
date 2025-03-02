@@ -20,7 +20,7 @@ export class AssociaClienteComponent {
   clienteId: number = 0;
   utenteId: number = 0;
   clienteForm!: FormGroup;
-  dataRegistrazione: string = localStorage.getItem('dataRegistrazione');
+  dataRegistrazione: string = '';
   immagineDefault: string =
     'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
   passwordVisibile: boolean = false;
@@ -38,6 +38,8 @@ export class AssociaClienteComponent {
 
   ngOnInit(): void {
     this.inizializzaForm();
+    this.dataRegistrazione = this.authService.getDataRegistrazione();
+    this.utenteId = this.authService.getUtenteIdSessione();
   }
 
   inizializzaForm(): void {
@@ -94,7 +96,6 @@ export class AssociaClienteComponent {
         })
       )
       .subscribe((utenteResponse) => {
-        console.log("Risposta dopo l'associazione utente:", utenteResponse);
         this.gestisciRispostaRegistrazione(utenteResponse);
       });
   }
@@ -116,9 +117,9 @@ export class AssociaClienteComponent {
   associaIdClienteAUtente(clienteId: number): Observable<any> {
     const utenteUpdateForm = {
       idCliente: clienteId,
-      idUtente: localStorage.getItem('idUtente'),
-      email: localStorage.getItem('email'),
-      username: localStorage.getItem('username'),
+      idUtente: this.utenteId,
+      email: this.authService.getEmail(),
+      username: this.authService.getUsername(),
     };
 
     return this.utenteService.updateUtente(utenteUpdateForm);
@@ -126,7 +127,6 @@ export class AssociaClienteComponent {
 
   gestisciRispostaRegistrazione(utenteResponse: any): void {
     if (utenteResponse) {
-      console.log('Associazione completata con successo');
       this.inviaEmailRegistrazione();
       this.openDialog({
         titolo: 'Conferma',
@@ -135,7 +135,6 @@ export class AssociaClienteComponent {
       });
       this.router.navigate(['/']);
     } else {
-      console.log("Non è stato possibile associare il cliente all'utente");
       this.openDialog({
         titolo: 'Errore',
         msg: utenteResponse.msg,

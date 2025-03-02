@@ -16,7 +16,6 @@ import { PopUpComponent } from '../../dialog/pop-up/pop-up.component';
   styleUrls: ['./registra-utente-admin.component.css'],
 })
 export class RegistraUtenteAdminComponent {
-  utenteId: number = 0;
   utenteForm!: FormGroup;
   passwordVisibile: boolean = false;
   randomPassword: string = '';

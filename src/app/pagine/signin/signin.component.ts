@@ -2,28 +2,22 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
-import { ProfiloService } from '../../servizi/profilo/profilo.service';
 
 @Component({
   selector: 'app-signin',
-  standalone: false,
   templateUrl: './signin.component.html',
-  styleUrl: './signin.component.css',
+  styleUrls: ['./signin.component.css'],
+  standalone: false,
 })
 export class SigninComponent {
   signinForm: FormGroup;
-  logged = false;
   messaggioErrore: string | null = null;
-  ruoloUtente: string | null = null;
-  idUtente: number | null = null;
-  idCliente: number | null = null;
-  dataRegistrazione: Date | null = null;
   passwordVisibile: boolean = false;
 
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
-    private authService: AuthService //
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -42,24 +36,22 @@ export class SigninComponent {
       return;
     }
 
-    const datiAccesso = this.signinForm.value;
+    const { username, password } = this.signinForm.value;
 
-    this.authService.signInUtente(datiAccesso).subscribe(
-      (response) => {
-        if (response.logged) {
-          this.logged = true;
-          this.messaggioErrore = null;
-        } else {
-          this.logged = false;
-          this.messaggioErrore =
-            'Utente non trovato o dati di accesso non corretti';
-        }
-      },
-      (error) => {
-        this.logged = false;
-        this.messaggioErrore = 'Si è verificato un errore. Riprova più tardi';
-        console.error(error);
-      }
-    );
+    // Effettua il login attraverso il servizio AuthService
+    this.authService.signInAuthUtente(username, password);
+
+    // Gestisci l'esito del login
+    if (this.authService.isRcLog) {
+      this.messaggioErrore = null;
+      this.router
+        .navigate([this.authService.getRedirectionRoute()])
+        .then(() => {
+          window.location.reload(); // Ricarica la pagina per applicare correttamente i cambiamenti
+        });
+    } else {
+      this.messaggioErrore =
+        this.authService.errorMessage || 'Credenziali non valide';
+    }
   }
 }

@@ -9,6 +9,7 @@ import { PopUpComponent } from '../../dialog/pop-up/pop-up.component';
 import { MatDialog } from '@angular/material/dialog';
 import { catchError, retry } from 'rxjs';
 import { error } from 'console';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-prodotti',
@@ -24,9 +25,9 @@ export class ProdottiComponent implements OnInit {
   listaArtisti: string[] = [];
   isLoading: boolean;
   filtriPresenti: boolean = false;
-  idCliente = +localStorage.getItem('idCliente')!;
+  idCliente: number = 0;
   cartBadge: { [idProdotto: number]: number } = {};
-  pagine: number =0;
+  pagine: number = 0;
   paginaCorrente = 0;
 
   wishlistId: number[] = [];
@@ -37,16 +38,18 @@ export class ProdottiComponent implements OnInit {
     private serviceCarrello: CarrelloService,
     private loader: LoaderService,
     private wishlistService: WishlistService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.loader.loaderState.subscribe((state) => {
       this.isLoading = state;
     });
+    this.idCliente = this.authService.getClienteIdSessione();
     this.getTuttiProdotti();
     this.getTuttiProdottiVetrina(1);
-  
+
     this.getProdottiCarrello();
     this.caricaWishlist();
   }
@@ -54,21 +57,22 @@ export class ProdottiComponent implements OnInit {
   getProdottiCarrello() {
     this.serviceCarrello.listaProdotti(this.idCliente).subscribe({
       next: (r: any) => {
-      this.loader.startLoader();
-      if (r.rc) {
-        r.dati.prodotti.forEach((p: any) => {
-          p.prodotto.prodottiCarrello.forEach((pc: any) => {
-            if (p.id == pc.id) {
-              this.cartBadge[p.prodotto.idProdotto] = pc.quantita;
-            }
+        this.loader.startLoader();
+        if (r.rc) {
+          r.dati.prodotti.forEach((p: any) => {
+            p.prodotto.prodottiCarrello.forEach((pc: any) => {
+              if (p.id == pc.id) {
+                this.cartBadge[p.prodotto.idProdotto] = pc.quantita;
+              }
+            });
           });
-        });
-      }
-      this.loader.stopLoader();
-    }, error: (err) => {
-      this,this.route.navigate(['/error500']);
-    } 
-  });
+        }
+        this.loader.stopLoader();
+      },
+      error: (err) => {
+        this, this.route.navigate(['/error500']);
+      },
+    });
   }
 
   getTuttiProdotti() {
@@ -76,8 +80,8 @@ export class ProdottiComponent implements OnInit {
     this.service.listAll().subscribe((resp) => {
       this.response = resp;
       if (this.response.rc === true) {
-         let data = this.response.dati;
-        this.pagine =  Math.round(data.length / 12);
+        let data = this.response.dati;
+        this.pagine = Math.round(data.length / 12);
       } else {
         this.openDialog(this.response);
       }
@@ -91,7 +95,7 @@ export class ProdottiComponent implements OnInit {
       this.response = resp;
       if (this.response.rc === true) {
         this.data = this.response.dati;
-        this.paginaCorrente=i;
+        this.paginaCorrente = i;
       } else {
         this.openDialog(this.response);
       }

@@ -16,8 +16,6 @@ import { MatDialog } from '@angular/material/dialog';
   styleUrl: './cambia-password.component.css',
 })
 export class CambiaPasswordComponent {
-  idCliente: number = 0;
-  idUtente: number = 0;
   passwordForm!: FormGroup;
   passwordCorrenteVisibile: boolean = false;
   passwordNuovaVisibile: boolean = false;

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ProdottoCarrello } from '../../interfacce/ProdottoCarrello';
 import { PopUpComponent } from '../../dialog/pop-up/pop-up.component';
 import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-carrello',
@@ -14,15 +15,19 @@ import { MatDialog } from '@angular/material/dialog';
 export class CarrelloComponent implements OnInit {
   prodottiCarrello: ProdottoCarrello[];
   totale: number = 0;
-  idCliente = +localStorage.getItem('idCliente')!;
+  idCliente: number = 0;
   msg: string = '';
   rc: boolean = true;
   isLoading: boolean;
 
-  constructor(private serv: CarrelloService,
+  constructor(
+    private serv: CarrelloService,
     private router: Router,
-    private dialog: MatDialog
-  ) {}
+    private dialog: MatDialog,
+    private authService: AuthService
+  ) {
+    this.idCliente = this.authService.getClienteIdSessione();
+  }
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -38,12 +43,13 @@ export class CarrelloComponent implements OnInit {
         } else {
           this.rc = r.rc;
         }
-        
-        this.isLoading = false
-    }, error: (err) => {
-      this,this.router.navigate(['/error500']);
-    }
-  });
+
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this, this.router.navigate(['/error500']);
+      },
+    });
   }
 
   svuotaCarrello() {
@@ -52,9 +58,9 @@ export class CarrelloComponent implements OnInit {
     };
     this.serv.svuotaCarrello(request).subscribe((r: any) => {
       if (r.rc) {
-        this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+        this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
       } else {
-        this.openDialog({titolo: "Errore", msg : r.msg })
+        this.openDialog({ titolo: 'Errore', msg: r.msg });
       }
     });
   }
@@ -65,59 +71,61 @@ export class CarrelloComponent implements OnInit {
 
   rimuoviProdotto(idProdotto: number) {
     let request = {
-      idCliente : this.idCliente,
-      idProdotto : idProdotto,
-      quantita: 1
-    }
-    this.serv.removeProdotto(request).subscribe((r:any) => {
+      idCliente: this.idCliente,
+      idProdotto: idProdotto,
+      quantita: 1,
+    };
+    this.serv.removeProdotto(request).subscribe((r: any) => {
       if (r.rc) {
-        this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+        this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
       } else {
-        this.openDialog({titolo: "Errore", msg : r.msg })
+        this.openDialog({ titolo: 'Errore', msg: r.msg });
       }
-    })
+    });
   }
 
   aggiungiProdotto(idProdotto: number) {
     let request = {
-      idCliente : this.idCliente,
-      idProdotto : idProdotto,
-      quantita: 1
-    }
-    this.serv.addProdotto(request).subscribe((r:any) => {
+      idCliente: this.idCliente,
+      idProdotto: idProdotto,
+      quantita: 1,
+    };
+    this.serv.addProdotto(request).subscribe((r: any) => {
       if (r.rc) {
-        this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+        this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
       } else {
-        this.openDialog({titolo: "Errore", msg : r.msg })
+        this.openDialog({ titolo: 'Errore', msg: r.msg });
       }
-    })
+    });
   }
 
-  eliminaProdotto(idProdotto: number, quantita: number){
+  eliminaProdotto(idProdotto: number, quantita: number) {
     let request = {
-      idCliente : this.idCliente,
-      idProdotto : idProdotto,
-      quantita: quantita
-    }
-    this.serv.removeProdotto(request).subscribe((r:any) => {
+      idCliente: this.idCliente,
+      idProdotto: idProdotto,
+      quantita: quantita,
+    };
+    this.serv.removeProdotto(request).subscribe((r: any) => {
       if (r.rc) {
-        this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+        this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
       } else {
-        this.openDialog({titolo: "Errore", msg : r.msg })
+        this.openDialog({ titolo: 'Errore', msg: r.msg });
       }
-    })
+    });
   }
 
-  ordina(){
+  ordina() {
     this.router.navigate(['carrello/checkout']);
   }
 
   openDialog(inputDialog: any) {
     this.dialog.open(PopUpComponent, {
       width: '400px',
-      data: { titolo: inputDialog.titolo,
+      data: {
+        titolo: inputDialog.titolo,
         msg: inputDialog.msg,
-        reload: inputDialog.reload },
+        reload: inputDialog.reload,
+      },
     });
   }
 }

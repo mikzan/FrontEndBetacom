@@ -35,6 +35,7 @@ export class RegistrazioneComponent implements OnChanges {
   ruolo: string = 'UTENTE';
   msgRegistrazione: string =
     'Registrazione avvenuta con successo, controlla la tua email.';
+
   constructor(
     private clienteService: ClienteService,
     private utenteService: UtenteService,
@@ -52,7 +53,7 @@ export class RegistrazioneComponent implements OnChanges {
   inizializzaForm(): void {
     const telefonoRegex =
       '^\\+?\\d{1,3}[\\s-]?\\(?\\d{1,4}\\)?[\\s-]?\\d{1,4}[\\s-]?\\d{1,4}$';
-    const usernamePattern = '^[a-zA-Z0-9-_]{3,15}$'; // Solo lettere, numeri, trattini,underscores,3-15 caratteri
+    const usernamePattern = '^[a-zA-Z0-9-_]{3,15}$'; // Solo lettere, numeri, trattini, underscores, 3-15 caratteri
 
     this.clienteForm = new FormGroup({
       nome: new FormControl('', [Validators.required]),
@@ -155,15 +156,22 @@ export class RegistrazioneComponent implements OnChanges {
     this.clienteService
       .createCliente(clienteInvioForm)
       .pipe(
-        switchMap((clienteResponse: any) =>
-          this.createUtentePerNuovoCliente(clienteResponse, randomPassword)
-        ),
-        catchError((errore) =>
-          this.gestisciErrore(
+        switchMap((clienteResponse: any) => {
+          return this.createUtentePerNuovoCliente(
+            clienteResponse,
+            randomPassword
+          );
+        }),
+        catchError((errore) => {
+          console.error(
+            'registraClienteEUtente: Errore durante la registrazione',
+            errore
+          );
+          return this.gestisciErrore(
             errore,
             "'Errore durante la registrazione del cliente e/o utente:'"
-          )
-        )
+          );
+        })
       )
       .subscribe((utenteResponse: any) => {
         this.gestioneRispostaRegistrazione(utenteResponse, randomPassword);
@@ -175,7 +183,9 @@ export class RegistrazioneComponent implements OnChanges {
           },
         });
 
-        dialogRef.afterClosed().subscribe((result) => {});
+        dialogRef.afterClosed().subscribe((result) => {
+          console.log('Dialog chiuso con risultato:', result);
+        });
       });
   }
 
@@ -215,8 +225,6 @@ export class RegistrazioneComponent implements OnChanges {
     if (utenteResponse) {
       this.invioEmailRegistrazione(randomPassword);
       this.router.navigate(['/']);
-    } else {
-      console.log("Non è stato possibile creare l'utente");
     }
   }
 
@@ -233,12 +241,8 @@ export class RegistrazioneComponent implements OnChanges {
       password: randomPassword,
     };
     this.mailService.confermaRegistrazione(mailRequest).subscribe(
-      (response) => {
-        // console.log('Email di conferma registrazione inviata ', response);
-      },
-      (error) => {
-        //console.error("Errore durante l'invio della email:", error);
-      }
+      (response) => {},
+      (error) => {}
     );
   }
 }

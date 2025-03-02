@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-center">
   <form class="mb-5 signin" [formGroup]="signinForm" (ngSubmit)="onSubmit()">
-    <p *ngIf="!logged && messaggioErrore" class="text-danger">
+    <p *ngIf="messaggioErrore" class="text-danger">
       {{ messaggioErrore }}
     </p>
 

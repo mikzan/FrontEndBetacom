@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Recensione } from '../../interfacce/Recensione';
 import { RecensioneService } from '../../servizi/recensione/recensione.service';
 import { Prodotto } from '../../interfacce/Prodotto';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-form-recensione',
@@ -20,15 +21,17 @@ export class FormRecensioneComponent implements OnInit {
   msg: string;
   rc: boolean;
   response: any;
-  idCliente = +localStorage.getItem('idCliente')!;
+  idCliente: number = 0;
 
   constructor(
+    private authService: AuthService,
     private serv: RecensioneService,
     public dialogRef: MatDialogRef<FormRecensioneComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit(): void {
+    this.idCliente = this.authService.getClienteIdSessione();
     this.initDati(this.data);
     console.log('recensione', this.recensioneSelezionata);
 

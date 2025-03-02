@@ -4,168 +4,187 @@ import { Observable, Subject, Subscription, tap } from 'rxjs';
 import { SignIn } from '../interfacce/SignIn';
 import { Router } from '@angular/router';
 import { ConfigService } from '../servizi/config/config.service';
+import { LocalStorageService } from '../servizi/localstorage/localstorage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private signInUrl: string = 'http://localhost:9090/rest/utente/signin';
+  private authSignInUrl: string = 'http://localhost:9090/rest/auth/login';
+  private logoutSubject: Subject<void> = new Subject<void>();
+  private subscriptions: Subscription[] = [];
+  isRcLog: boolean = false;
+  isRcReg: boolean = false;
+  errorMessage: string = '';
+
   constructor(
     private http: HttpClient,
     private router: Router,
-    private config: ConfigService
+    private config: ConfigService,
+    private localStorage: LocalStorageService
   ) {}
-  private signInUrl: string = 'http://localhost:9090/rest/utente/signin';
-  private logoutSubject: Subject<void> = new Subject<void>();
-  private subscriptions: Subscription[] = [];
 
-  signInUtente(body: {
-    username: string;
-    password: string;
-  }): Observable<SignIn> {
-    return this.http.post<SignIn>(this.signInUrl, body).pipe(
-      tap((response) => {
-        console.log(response);
-
-        if (response && response.logged) {
-          this.setSessione(response);
-          this.gestisciConfig();
-          this.setRottaPerRuolo();
+  // Versione per JWT token
+  signInAuthUtente(username: string, password: string): void {
+    this.http.post<any>(this.authSignInUrl, { username, password }).subscribe({
+      next: (response) => {
+        if (response.rc) {
+          this.setSessione(response.dati);
+          this.isRcLog = true;
+          this.router.navigate([this.getRedirectionRoute()]).then(() => {
+            window.location.reload();
+          });
         } else {
-          //console.log('Credenziali non valide');
+          this.errorMessage = response.msg;
         }
-      })
-    );
-  }
-
-  isLoggedOut(): boolean {
-    return !this.isAuthenticated();
-  }
-
-  private setRottaPerRuolo(): void {
-    this.router;
-    if (this.isAdmin()) {
-      this.router.navigate(['/admin/dashboard']).then(() => {
-        window.location.reload();
-      });
-    } else if (this.isUtente() && this.getClienteIdSessione != null) {
-      this.router.navigate(['/profilo']).then(() => {
-        window.location.reload();
-      });
-    } else if (this.isUtente()) {
-      console.log('Ruolo: Utente');
-      this.router.navigate(['/profilo']).then(() => {
-        window.location.reload();
-      });
-    } else {
-      //console.log('Credenziali non valide');
-    }
-  }
-
-  private buildURL() {
-    this.config.getConfig().subscribe((response: any) => {
-      if (response && response.domain && response.port) {
-        let url = 'http://' + response.domain + ':' + response.port + '/rest/';
-        localStorage.setItem('config', url);
-      } else {
-        //console.error('Config non valido:', response);
-      }
+      },
+      error: (err) => {
+        this.errorMessage = 'Errore durante la connessione: ' + err.message;
+      },
     });
   }
 
-  private gestisciConfig() {
-    const valoreConfig = localStorage.getItem('config');
-    if (valoreConfig) {
-      // console.log('Config trovato nel localStorage:', valoreConfig);
+  // Nuovo metodo per gestire la sessione
+  private setSessione(dati: any): void {
+    console.log('Salvataggio dei dati nel localStorage:', dati); // Verifica i dati che stai salvando
+
+    localStorage.setItem('token', dati.token);
+    localStorage.setItem('dati_utente', JSON.stringify(dati));
+    localStorage.setItem('ruoloUtente', dati.role);
+
+    // Verifica che i dati siano memorizzati correttamente
+    console.log('Token memorizzato:', localStorage.getItem('token'));
+    console.log(
+      'Dati utente memorizzati:',
+      localStorage.getItem('dati_utente')
+    );
+    console.log('Ruolo memorizzato:', localStorage.getItem('ruoloUtente'));
+  }
+
+  // Recupera l'ID del cliente dalla sessione
+  getClienteIdSessione(): number | null {
+    const datiUtente = localStorage.getItem('dati_utente');
+    const utente = datiUtente ? JSON.parse(datiUtente) : null;
+    return utente ? utente.idCliente : null;
+  }
+
+  // Recupera l'ID dell'utente dalla sessione
+  getUtenteIdSessione(): number | null {
+    const datiUtente = localStorage.getItem('dati_utente');
+    if (datiUtente) {
+      const utente = JSON.parse(datiUtente);
+      return utente.idUtente ?? null; // Access the idUtente directly
+    }
+    return null;
+  }
+
+  // Controlla se l'utente è un "Admin"
+  isAdmin(): boolean {
+    return localStorage.getItem('ruoloUtente') === 'ADMIN';
+  }
+
+  // Controlla se l'utente è un "Utente"
+  isUtente(): boolean {
+    return localStorage.getItem('ruoloUtente') === 'UTENTE';
+  }
+
+  // Ottieni il token JWT
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  // LOGOUT - Rimuove il token e reindirizza al login
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('dati_utente');
+    localStorage.removeItem('ruoloUtente');
+    console.log('🚪 Logout effettuato!');
+    this.router.navigate(['/login']).then(() => {
+      window.location.reload();
+    });
+  }
+
+  // Imposta la rotta da seguire dopo il login in base al ruolo
+  getRedirectionRoute(): string {
+    if (this.isAdmin()) {
+      return '/admin/dashboard';
+    } else if (this.isUtente() && this.getClienteIdSessione() != null) {
+      return '/profilo';
     } else {
-      //console.log('Config non trovato');
-      this.buildURL();
+      return '/signin';
     }
   }
-  getURL(component: string): string {
-    const config = localStorage.getItem('config');
-    if (!config) this.buildURL();
-    const fullUrl = config ? config + component : '';
-    return fullUrl;
+
+  isAuthenticated(): boolean {
+    return !!this.getToken(); // Se esiste un token, l'utente è autenticato
   }
 
-  private setSessione(response: SignIn): void {
-    localStorage.setItem(
-      'idUtente',
-      response.idUtente ? response.idUtente.toString() : ''
-    );
-    localStorage.setItem(
-      'idCliente',
-      response.idCliente ? response.idCliente.toString() : ''
-    );
-    localStorage.setItem(
-      'ruoloUtente',
-      response.role ? response.role.toString() : ''
-    );
-    localStorage.setItem(
-      'dataRegistrazione',
-      response.dataRegistrazione ? response.dataRegistrazione.toString() : ''
-    );
-    localStorage.setItem(
-      'username',
-      response.username ? response.username.toString() : ''
-    );
-    localStorage.setItem(
-      'email',
-      response.email ? response.email.toString() : ''
-    );
-  }
-
-  getUtenteIdSessione(): number | null {
-    return +localStorage.getItem('idUtente');
-  }
-  getClienteIdSessione(): number | null {
-    return +localStorage.getItem('idCliente');
+  // Metodo per verificare se l'utente è un ADMIN e non ha un cliente associato
+  isAdminNotCliente(): boolean {
+    const datiUtente = this.getDatiUtente();
+    return datiUtente && datiUtente.role === 'ADMIN' && !datiUtente.idCliente;
   }
   getRuoloUtente(): string | null {
     return localStorage.getItem('ruoloUtente');
   }
 
+  getDataRegistrazione(): string | null {
+    const datiUtente = localStorage.getItem('dati_utente');
+    if (datiUtente) {
+      const utente = JSON.parse(datiUtente);
+      return utente.dataRegistrazione || null;
+    }
+    return null;
+  }
+
+  getEmail(): string | null {
+    const datiUtente = localStorage.getItem('dati_utente');
+    if (datiUtente) {
+      const utente = JSON.parse(datiUtente);
+      return utente.email || null;
+    }
+    return null;
+  }
+
+  // Metodo per verificare se l'utente è autenticato
+  isLoggedOut(): boolean {
+    return !this.getToken(); // Se non esiste un token, l'utente è "loggato fuori"
+  }
+
   getUsername(): string | null {
-    return localStorage.getItem('username');
+    const datiUtente = this.getDatiUtente();
+    return datiUtente ? datiUtente.username : null;
   }
-  logout(): void {
-    // pulisco la session storage
-    localStorage.clear();
-    this.router.navigate(['/']);
-    this.logoutSubject.next();
-    this.unsubscribeAll();
+  getDatiUtente(): any {
+    const datiUtente = localStorage.getItem('dati_utente');
+    return datiUtente ? JSON.parse(datiUtente) : null;
   }
 
-  onLogout(): Observable<void> {
-    return this.logoutSubject.asObservable();
+  // Metodo per ottenere l'URL base
+  private buildURL(): void {
+    this.config.getConfig().subscribe((response: any) => {
+      if (response && response.domain && response.port) {
+        const url = `http://${response.domain}:${response.port}/rest/`;
+        localStorage.setItem('config', url);
+      } else {
+        console.error('Config non valido:', response);
+      }
+    });
   }
 
-  private unsubscribeAll(): void {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.subscriptions = [];
+  // Ottieni l'URL completo per il componente
+  getURL(component: string): string {
+    const config = localStorage.getItem('config');
+    if (!config) this.buildURL();
+    return config ? config + component : '';
   }
 
-  isAuthenticated(): boolean {
-    return localStorage.getItem('idUtente') !== null;
-  }
-
-  getUserRole(): string | null {
-    return localStorage.getItem('ruoloUtente');
-  }
-
-  isAdmin(): boolean {
-    return this.getRuoloUtente() === 'ADMIN';
-  }
-
-  isAdminNotCliente(): boolean {
-    return this.getRuoloUtente() === 'ADMIN' && !this.getClienteIdSessione();
-  }
-
-  isNotCliente(): boolean {
-    return !this.getClienteIdSessione();
-  }
-
-  isUtente(): boolean {
-    return this.getRuoloUtente() === 'UTENTE';
+  // Gestione configurazione
+  private gestisciConfig(): void {
+    const valoreConfig = localStorage.getItem('config');
+    if (!valoreConfig) {
+      this.buildURL();
+    }
   }
 }

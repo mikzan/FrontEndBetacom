@@ -22,7 +22,7 @@ export class ProfiloComponent implements OnInit {
   clienteForm!: FormGroup;
   @Input() editMode: boolean = false;
   @Input() isRegistrazione: boolean = false;
-  dataRegistrazione: string = localStorage.getItem('dataRegistrazione');
+  dataRegistrazione: string = '';
   immagineDefault: string =
     'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
   nomeClienteBenvenuto: string = '';
@@ -42,6 +42,7 @@ export class ProfiloComponent implements OnInit {
   ngOnInit(): void {
     this.inizializzaForm();
     this.loadDatiCliente();
+    this.dataRegistrazione = this.authService.getDataRegistrazione();
   }
 
   inizializzaForm(): void {

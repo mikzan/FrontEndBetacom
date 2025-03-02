@@ -9,6 +9,7 @@ import { LoaderService } from '../../servizi/loader.service';
 import { PopUpComponent } from '../../dialog/pop-up/pop-up.component';
 import { MatDialog } from '@angular/material/dialog';
 import { WishlistService } from '../../servizi/wishlist/wishlist.service';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-dettaglio-prodotto',
@@ -23,7 +24,7 @@ export class DettaglioProdottoComponent implements OnInit {
   isLoading: boolean;
   response: any;
   qnt: number;
-  idCliente = +localStorage.getItem('idCliente')!;
+  idCliente: number = 0;
   qntForm: FormGroup;
   stelle: number = 0;
   cartBadge: { [idProdotto: number]: number } = {};
@@ -37,7 +38,8 @@ export class DettaglioProdottoComponent implements OnInit {
     private formBuilder: FormBuilder,
     private loader: LoaderService,
     private wishlistService: WishlistService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private authService: AuthService
   ) {
     this.idProdotto = +this.route.snapshot.paramMap.get('idProdotto')!;
   }
@@ -46,6 +48,7 @@ export class DettaglioProdottoComponent implements OnInit {
     this.loader.loaderState.subscribe((state) => {
       this.isLoading = state;
     });
+    this.idCliente = this.authService.getClienteIdSessione();
     this.qntForm = this.formBuilder.group({
       qnt: 0,
     });
@@ -60,11 +63,11 @@ export class DettaglioProdottoComponent implements OnInit {
       this.loader.startLoader();
       if (r.rc) {
         r.dati.prodotti.forEach((p: any) => {
-          p.prodotto.prodottiCarrello.forEach((pc:any) =>{
+          p.prodotto.prodottiCarrello.forEach((pc: any) => {
             if (p.id == pc.id) {
-              this.cartBadge[p.prodotto.idProdotto] = pc.quantita
+              this.cartBadge[p.prodotto.idProdotto] = pc.quantita;
             }
-          })
+          });
         });
       }
       this.loader.stopLoader();
@@ -105,9 +108,9 @@ export class DettaglioProdottoComponent implements OnInit {
 
       this.serviceCarrello.addProdotto(request).subscribe((r: any) => {
         if (r.rc) {
-          this.openDialog({titolo: "Conferma", msg : r.msg, reload : true })
+          this.openDialog({ titolo: 'Conferma', msg: r.msg, reload: true });
         } else {
-          this.openDialog({titolo: "Errore", msg : r.msg })
+          this.openDialog({ titolo: 'Errore', msg: r.msg });
         }
       });
     }
@@ -116,9 +119,11 @@ export class DettaglioProdottoComponent implements OnInit {
   openDialog(inputDialog: any) {
     this.dialog.open(PopUpComponent, {
       width: '400px',
-      data: { titolo: inputDialog.titolo,
+      data: {
+        titolo: inputDialog.titolo,
         msg: inputDialog.msg,
-        reload: inputDialog.reload },
+        reload: inputDialog.reload,
+      },
     });
   }
 
@@ -138,35 +143,36 @@ export class DettaglioProdottoComponent implements OnInit {
   }
 
   removeFromWishlist(prodotto: Prodotto) {
-    console.log("Tentativo di rimozione dalla wishlist:", prodotto.idProdotto);
+    console.log('Tentativo di rimozione dalla wishlist:', prodotto.idProdotto);
 
     this.wishlistService
       .removeProductFromWishlist(this.idCliente, prodotto.idProdotto)
       .subscribe({
         next: (response) => {
-          console.log("Risposta dal server:", response);
+          console.log('Risposta dal server:', response);
 
           if (response.rc === true) {
-            console.log("Prodotto rimosso con successo dalla wishlist");
+            console.log('Prodotto rimosso con successo dalla wishlist');
 
             this.wishlistId = this.wishlistId.filter(
               (id) => id !== prodotto.idProdotto
             );
 
-            console.log("Nuova lista wishlistId:", this.wishlistId);
+            console.log('Nuova lista wishlistId:', this.wishlistId);
 
             this.caricaWishlist();
           } else {
-            console.warn("Errore nella rimozione:", response.msg);
+            console.warn('Errore nella rimozione:', response.msg);
           }
         },
         error: (error) => {
-          console.error("Errore nella chiamata API removeProductFromWishlist:", error);
+          console.error(
+            'Errore nella chiamata API removeProductFromWishlist:',
+            error
+          );
         },
       });
   }
-
-
 
   caricaWishlist() {
     this.wishlistService.getWishlist(this.idCliente).subscribe({
